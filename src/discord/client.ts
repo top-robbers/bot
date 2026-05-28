@@ -1,7 +1,7 @@
-import { ActivityType, Client, Events, GatewayIntentBits, MessageFlags } from 'discord.js';
-import { env } from '../config/env.js';
-import { logger } from '../shared/logger.js';
+import { Client, Events, GatewayIntentBits, InteractionReplyOptions, MessageFlags } from 'discord.js';
+
 import { commands } from './commands/index.js';
+import { logger } from '../shared/logger.js';
 
 export function createDiscordClient(): Client {
     const client = new Client({
@@ -9,19 +9,10 @@ export function createDiscordClient(): Client {
     });
 
     client.once(Events.ClientReady, (readyClient) => {
-        logger.info('Discord client is ready.', {
-            user: readyClient.user.tag,
-            guilds: readyClient.guilds.cache.size,
-        });
-
-        readyClient.user.setPresence({
-            status: 'online',
-            activities: [
-                {
-                    name: env.DISCORD_ACTIVITY,
-                    type: ActivityType.Watching,
-                },
-            ],
+        logger.info('Discord client ready.', {
+            userTag: readyClient.user.tag,
+            userId: readyClient.user.id,
+            guildCount: readyClient.guilds.cache.size,
         });
     });
 
@@ -33,10 +24,18 @@ export function createDiscordClient(): Client {
         const command = commands.get(interaction.commandName);
 
         if (!command) {
-            await interaction.reply({
+            logger.warn('Unknown command received.', {
+                commandName: interaction.commandName,
+                guildId: interaction.guildId,
+                userId: interaction.user.id,
+            });
+
+            const response = {
                 content: 'Unknown command.',
                 flags: MessageFlags.Ephemeral,
-            });
+            } satisfies InteractionReplyOptions;
+
+            await interaction.reply(response);
 
             return;
         }
@@ -44,35 +43,25 @@ export function createDiscordClient(): Client {
         try {
             await command.execute(interaction);
         } catch (error) {
-            logger.error('Failed to execute command.', {
-                command: interaction.commandName,
-                error: error instanceof Error ? error.message : error,
+            logger.error('Command execution failed.', {
+                commandName: interaction.commandName,
+                guildId: interaction.guildId,
+                userId: interaction.user.id,
+                error,
             });
 
             const response = {
                 content: 'An internal error occurred while executing this command.',
                 flags: MessageFlags.Ephemeral,
-            };
+            } satisfies InteractionReplyOptions;
 
-            if (interaction.replied || interaction.deferred) {
+            if (interaction.deferred || interaction.replied) {
                 await interaction.followUp(response);
                 return;
             }
 
             await interaction.reply(response);
         }
-    });
-
-    client.on(Events.Error, (error) => {
-        logger.error('Discord client error.', {
-            error: error.message,
-        });
-    });
-
-    client.on(Events.Warn, (message) => {
-        logger.warn('Discord client warning.', {
-            message,
-        });
     });
 
     return client;

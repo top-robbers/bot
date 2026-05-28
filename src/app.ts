@@ -1,8 +1,9 @@
-import "dotenv/config";
-import { env } from "./config/env.js";
-import { createDiscordClient } from "./discord/client.js";
-import { createHttpServer } from "./http/server.js";
-import { logger } from "./shared/logger.js";
+import 'dotenv/config';
+
+import { env } from './config/env.js';
+import { createDiscordClient } from './discord/client.js';
+import { createHttpServer } from './http/server.js';
+import { logger } from './shared/logger.js';
 
 const client = createDiscordClient();
 const server = await createHttpServer(client);
@@ -16,14 +17,15 @@ async function shutdown(signal: string): Promise<void> {
 
     shuttingDown = true;
 
-    logger.info("Shutting down.", { signal });
+    logger.info('Shutting down.', { signal });
 
     try {
         await server.close();
         client.destroy();
+
         process.exit(0);
     } catch (error) {
-        logger.error("Failed to shutdown cleanly.", {
+        logger.error('Failed to shutdown cleanly.', {
             error: error instanceof Error ? error.message : error,
         });
 
@@ -31,8 +33,8 @@ async function shutdown(signal: string): Promise<void> {
     }
 }
 
-process.on("SIGINT", () => void shutdown("SIGINT"));
-process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on('SIGINT', () => void shutdown('SIGINT'));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
 
 try {
     await server.listen({
@@ -40,14 +42,14 @@ try {
         port: env.HTTP_PORT,
     });
 
-    logger.info("HTTP server started.", {
+    logger.info('HTTP server started.', {
         host: env.HTTP_HOST,
         port: env.HTTP_PORT,
     });
 
     await client.login(env.DISCORD_TOKEN);
 } catch (error) {
-    logger.error("Failed to start Discord bot.", {
+    logger.error('Failed to start Discord bot.', {
         error: error instanceof Error ? error.message : error,
     });
 

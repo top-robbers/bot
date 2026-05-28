@@ -1,27 +1,44 @@
-import Fastify from 'fastify';
 import type { Client } from 'discord.js';
-import { logger } from '../shared/logger.js';
-import { registerHealthRoute } from './routes/health.route.js';
+import Fastify, { type FastifyInstance } from 'fastify';
 
-export async function createHttpServer(client: Client) {
+import { env } from '../config/env.js';
+import { logger } from '../shared/logger.js';
+
+export async function createHttpServer(_client: Client): Promise<FastifyInstance> {
     const server = Fastify({
         logger: false,
-        trustProxy: true,
     });
 
-    server.setErrorHandler((error, request, reply) => {
-        logger.error('HTTP request failed.', {
-            method: request.method,
-            url: request.url,
-            error: error.message,
-        });
-
-        void reply.code(500).send({
-            message: 'Internal server error.',
-        });
+    server.get('/health', async () => {
+        return {
+            status: 'ok',
+            service: 'top-robbers-discord-bot',
+        };
     });
 
-    await registerHealthRoute(server, client);
+    server.post('/internal/events', async (request, reply) => {
+        const authorization = request.headers.authorization;
+        const expectedAuthorization = `Bearer ${env.INTERNAL_API_SECRET}`;
+
+        if (authorization !== expectedAuthorization) {
+            logger.warn('Rejected internal event request.', {
+                reason: 'Invalid authorization header',
+                ip: request.ip,
+            });
+
+            return reply.status(401).send({
+                message: 'Unauthorized.',
+            });
+        }
+
+        logger.info('Internal event received.', {
+            body: request.body,
+        });
+
+        return reply.status(202).send({
+            message: 'Accepted.',
+        });
+    });
 
     return server;
 }

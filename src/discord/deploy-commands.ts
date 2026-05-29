@@ -8,34 +8,32 @@ import { logger } from '../shared/logger.js';
 
 const rest = new REST({ version: '10' }).setToken(env.DISCORD_TOKEN);
 
-logger.info('Preparing slash commands deployment.', {
-    clientId: env.DISCORD_CLIENT_ID,
-    guildId: env.DISCORD_GUILD_ID ?? null,
-    commands: commandPayloads.map((command) => ({
-        name: command.name,
-        description: command.description,
-    })),
-});
-
 try {
-    if (!env.DISCORD_GUILD_ID) {
-        logger.warn('DISCORD_GUILD_ID is missing. Commands will be deployed globally and may take time to appear.');
-    }
-
-    const route = env.DISCORD_GUILD_ID
-        ? Routes.applicationGuildCommands(env.DISCORD_CLIENT_ID, env.DISCORD_GUILD_ID)
-        : Routes.applicationCommands(env.DISCORD_CLIENT_ID);
-
-    const deployedCommands = await rest.put(route, {
-        body: commandPayloads,
+    logger.info('Deploying guild slash commands.', {
+        clientId: env.DISCORD_CLIENT_ID,
+        guildId: env.DISCORD_GUILD_ID,
+        commands: commandPayloads.map((command) => ({
+            name: command.name,
+            description: command.description,
+        })),
     });
 
-    logger.info('Slash commands deployed successfully.', {
-        scope: env.DISCORD_GUILD_ID ? 'guild' : 'global',
+    const deployedCommands = await rest.put(
+        Routes.applicationGuildCommands(
+            env.DISCORD_CLIENT_ID,
+            env.DISCORD_GUILD_ID,
+        ),
+        {
+            body: commandPayloads,
+        },
+    );
+
+    logger.info('Guild slash commands deployed successfully.', {
+        guildId: env.DISCORD_GUILD_ID,
         deployedCommands,
     });
 } catch (error) {
-    logger.error('Failed to deploy slash commands.', {
+    logger.error('Failed to deploy guild slash commands.', {
         error,
     });
 

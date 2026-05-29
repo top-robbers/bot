@@ -5,6 +5,8 @@ import { createDiscordClient } from './discord/client.js';
 import { createHttpServer } from './http/server.js';
 import { logger } from './shared/logger.js';
 
+const SHUTDOWN_TIMEOUT_MS = 10_000;
+
 const client = createDiscordClient();
 const server = await createHttpServer(client);
 
@@ -20,7 +22,16 @@ async function shutdown(signal: string): Promise<void> {
     logger.info('Shutting down.', { signal });
 
     try {
-        await server.close();
+        await Promise.race([
+            server.close(),
+            new Promise<never>((_, reject) =>
+                setTimeout(
+                    () => reject(new Error(`Shutdown timed out after ${SHUTDOWN_TIMEOUT_MS}ms`)),
+                    SHUTDOWN_TIMEOUT_MS,
+                ),
+            ),
+        ]);
+
         client.destroy();
 
         process.exit(0);

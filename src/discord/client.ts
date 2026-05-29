@@ -1,5 +1,6 @@
-import { Client, Events, GatewayIntentBits, InteractionReplyOptions, MessageFlags } from 'discord.js';
+import { ActivityType, Client, Events, GatewayIntentBits, InteractionReplyOptions, MessageFlags } from 'discord.js';
 
+import { env } from '../config/env.js';
 import { commands } from './commands/index.js';
 import { logger } from '../shared/logger.js';
 
@@ -14,6 +15,8 @@ export function createDiscordClient(): Client {
             userId: readyClient.user.id,
             guildCount: readyClient.guilds.cache.size,
         });
+
+        readyClient.user.setActivity(env.DISCORD_ACTIVITY, { type: ActivityType.Playing });
     });
 
     client.on(Events.InteractionCreate, async (interaction) => {

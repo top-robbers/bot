@@ -6,7 +6,7 @@ const envSchema = z.object({
 
     DISCORD_TOKEN: z.string().min(1, 'DISCORD_TOKEN is required.'),
     DISCORD_CLIENT_ID: z.string().min(1, 'DISCORD_CLIENT_ID is required.'),
-    DISCORD_GUILD_ID: z.string().optional(),
+    DISCORD_GUILD_ID: z.string().min(1, 'DISCORD_GUILD_ID is required'),
     DISCORD_ACTIVITY: z.string().default('Top Robbers'),
 
     HTTP_HOST: z.string().default('0.0.0.0'),

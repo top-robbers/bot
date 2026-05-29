@@ -1,8 +1,11 @@
+import { createRequire } from 'node:module';
 import { ActivityType, Client, Events, GatewayIntentBits, InteractionReplyOptions, MessageFlags } from 'discord.js';
 
-import { env } from '../config/env.js';
 import { commands } from './commands/index.js';
 import { logger } from '../shared/logger.js';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../../package.json') as { version: string };
 
 export function createDiscordClient(): Client {
     const client = new Client({
@@ -14,9 +17,10 @@ export function createDiscordClient(): Client {
             userTag: readyClient.user.tag,
             userId: readyClient.user.id,
             guildCount: readyClient.guilds.cache.size,
+            version,
         });
 
-        readyClient.user.setActivity(env.DISCORD_ACTIVITY, { type: ActivityType.Playing });
+        readyClient.user.setActivity(`v${version} • Top Robbers`, { type: ActivityType.Playing });
     });
 
     client.on(Events.InteractionCreate, async (interaction) => {

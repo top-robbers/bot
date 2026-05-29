@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { ActivityType, Client, Events, GatewayIntentBits, InteractionReplyOptions, MessageFlags } from 'discord.js';
 
+import { env } from '../config/env.js';
 import { commands } from './commands/index.js';
 import { logger } from '../shared/logger.js';
 
@@ -12,7 +13,7 @@ export function createDiscordClient(): Client {
         intents: [GatewayIntentBits.Guilds],
     });
 
-    client.once(Events.ClientReady, (readyClient) => {
+    client.once(Events.ClientReady, async (readyClient) => {
         logger.info('Discord client ready.', {
             userTag: readyClient.user.tag,
             userId: readyClient.user.id,
@@ -20,7 +21,17 @@ export function createDiscordClient(): Client {
             version,
         });
 
-        readyClient.user.setActivity(`v${version} • Top Robbers`, { type: ActivityType.Playing });
+        try {
+            await readyClient.application.edit({
+                description: `v${version} • ${env.DISCORD_ACTIVITY}`,
+            });
+
+            logger.info('Application description updated.', { version });
+        } catch (error) {
+            logger.warn('Failed to update application description.', {
+                error: error instanceof Error ? error.message : error,
+            });
+        }
     });
 
     client.on(Events.InteractionCreate, async (interaction) => {

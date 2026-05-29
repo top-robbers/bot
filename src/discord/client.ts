@@ -23,7 +23,7 @@ export function createDiscordClient(): Client {
 
         try {
             await readyClient.application.edit({
-                description: `v${version} • ${env.DISCORD_ACTIVITY}`,
+                description: `${env.DISCORD_DESCRIPTION}`,
             });
 
             logger.info('Application description updated.', { version });

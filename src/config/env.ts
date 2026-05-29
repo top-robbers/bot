@@ -7,12 +7,16 @@ const envSchema = z.object({
     DISCORD_TOKEN: z.string().min(1, 'DISCORD_TOKEN is required.'),
     DISCORD_CLIENT_ID: z.string().min(1, 'DISCORD_CLIENT_ID is required.'),
     DISCORD_GUILD_ID: z.string().min(1, 'DISCORD_GUILD_ID is required'),
-    DISCORD_ACTIVITY: z.string().default('Top Robbers'),
+    DISCORD_DESCRIPTION: z.string().default('Preacher Bishop Discord Bot by Top Robbers'),
 
     HTTP_HOST: z.string().default('0.0.0.0'),
     HTTP_PORT: z.coerce.number().int().positive().max(65535).default(3000),
 
     INTERNAL_API_SECRET: z.string().optional(),
+
+    SERVER_IP: z.string().default('127.0.0.1'),
+    SERVER_PORT: z.coerce.number().int().positive().max(65535).default(7777),
+    SERVER_QUERY_INTERVAL_MS: z.coerce.number().int().positive().default(30_000),
 });
 
 const parsed = envSchema.safeParse(process.env);
